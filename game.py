@@ -5,10 +5,9 @@ import os
 
 pygame.init()
 
-# ----------------- AYARLAR -----------------
 WIDTH, HEIGHT = 800, 600
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Top Havuzu")
+pygame.display.set_caption("Ball Pit")
 clock = pygame.time.Clock()
 
 GRAVITY = 0.6
@@ -18,49 +17,38 @@ MIN_RADIUS = 35
 MAX_RADIUS = 70
 
 MAX_BALLS = 50
-COVERAGE_THRESHOLD = 0.85  # %85'e çıkar ki küp düşene kadar beklesin
+COVERAGE_THRESHOLD = 0.85
 
-CUBE_SPAWNED = False  # Küp düştü mü?
+CUBE_SPAWNED = False
 
-# ----------------- RESİMLERİ YÜKLE -----------------
 orb_images = []
 orb_folder = "assets"
 
-# Orb resimlerini yükle (cube.png HARİÇ!)
 if os.path.exists(orb_folder):
     for filename in os.listdir(orb_folder):
-        if filename.endswith(".png") and filename != "cube.png":  # cube.png'yi ATLA!
+        if filename.endswith(".png") and filename != "cube.png":
             img_path = os.path.join(orb_folder, filename)
             try:
                 img = pygame.image.load(img_path).convert_alpha()
                 orb_images.append(img)
-                print(f"Orb yüklendi: {filename}")
             except:
-                print(f"Yüklenemedi: {filename}")
+                pass
 
-# Küp resmini assets klasöründen yükle
 cube_image = None
-cube_path = os.path.join(orb_folder, "cube.png")  # assets/cube.png
+cube_path = os.path.join(orb_folder, "cube.png")
 if os.path.exists(cube_path):
     try:
         cube_image = pygame.image.load(cube_path).convert_alpha()
-        print("Küp yüklendi: cube.png (sadece küp için kullanılacak)")
     except:
-        print("Küp yüklenemedi!")
+        pass
 
 USE_IMAGES = len(orb_images) > 0
 
-if USE_IMAGES:
-    print(f"{len(orb_images)} orb resmi yüklendi!")
-else:
-    print("Resim bulunamadı, renkli daireler kullanılacak.")
-
-# -------------------------------------------
 balls = []
-cube = None  # Tek bir küp
+cube = None
 
-spawn_count = 0  # Kaç obje düştü
-CUBE_DROP_INDEX = random.randint(35, 45)  # 35-45 arasında rastgele bir sırada küp düşecek (havuzun sonlarına doğru)
+spawn_count = 0
+CUBE_DROP_INDEX = random.randint(35, 45)
 
 last_spawn = pygame.time.get_ticks()
 next_spawn_delay = random.randint(0, 2000)
@@ -85,7 +73,7 @@ class Ball:
             random.randint(80, 255),
             random.randint(80, 255),
         )
-        
+
         if USE_IMAGES:
             self.orb_image = random.choice(orb_images)
             self.base_image = pygame.transform.smoothscale(
@@ -102,24 +90,18 @@ class Ball:
         self.x += self.vx
         self.y += self.vy
 
-        # Dönme hareketi - sadece hızlıysa dönsün
-        if not self.held:
-            # Yatay hız küçükse dönmeyi azalt/durdur
-            if abs(self.vx) > 0.5:
-                self.angular_velocity = -self.vx / self.r * 0.5  # Dönmeyi yavaşlat
-            else:
-                self.angular_velocity *= 0.9  # Yavaş yavaş dur
-            
-            # Açısal hızı sınırla
-            max_angular_vel = 0.15
-            if abs(self.angular_velocity) > max_angular_vel:
-                self.angular_velocity = max_angular_vel if self.angular_velocity > 0 else -max_angular_vel
-            
-            # Çok küçük açısal hızı sıfırla
-            if abs(self.angular_velocity) < 0.01:
-                self.angular_velocity = 0
-            
-            self.angle += self.angular_velocity
+        if abs(self.vx) > 0.5:
+            self.angular_velocity = -self.vx / self.r * 0.5
+        else:
+            self.angular_velocity *= 0.9
+
+        if abs(self.angular_velocity) > 0.15:
+            self.angular_velocity = 0.15 if self.angular_velocity > 0 else -0.15
+
+        if abs(self.angular_velocity) < 0.01:
+            self.angular_velocity = 0
+
+        self.angle += self.angular_velocity
 
         if self.x - self.r < 0:
             self.x = self.r
@@ -138,8 +120,8 @@ class Ball:
     def draw(self):
         if USE_IMAGES and self.base_image:
             rotated_image = pygame.transform.rotozoom(
-                self.base_image, 
-                math.degrees(self.angle), 
+                self.base_image,
+                math.degrees(self.angle),
                 1.0
             )
             rect = rotated_image.get_rect(center=(int(self.x), int(self.y)))
@@ -155,15 +137,15 @@ class Cube:
         self.x = x
         self.y = y
         self.size = size
-        self.r = size / 2  # Küpü daire gibi ele al - yarıçap
+        self.r = size / 2
         self.vx = 0
         self.vy = 0
-        self.mass = MIN_RADIUS * MIN_RADIUS  # En küçük topla aynı kütle
+        self.mass = MIN_RADIUS * MIN_RADIUS
         self.held = False
         self.angle = 0
         self.angular_velocity = 0
         self.color = (255, 200, 50)
-        
+
         if cube_image:
             self.base_image = pygame.transform.smoothscale(
                 cube_image, (size, size)
@@ -179,24 +161,18 @@ class Cube:
         self.x += self.vx
         self.y += self.vy
 
-        # Dönme hareketi - sadece hızlıysa dönsün
-        if not self.held:
-            # Yatay hız küçükse dönmeyi azalt/durdur
-            if abs(self.vx) > 0.5:
-                self.angular_velocity = -self.vx / self.r * 0.5  # Dönmeyi yavaşlat
-            else:
-                self.angular_velocity *= 0.9  # Yavaş yavaş dur
-            
-            # Açısal hızı sınırla
-            max_angular_vel = 0.15
-            if abs(self.angular_velocity) > max_angular_vel:
-                self.angular_velocity = max_angular_vel if self.angular_velocity > 0 else -max_angular_vel
-            
-            # Çok küçük açısal hızı sıfırla
-            if abs(self.angular_velocity) < 0.01:
-                self.angular_velocity = 0
-            
-            self.angle += self.angular_velocity
+        if abs(self.vx) > 0.5:
+            self.angular_velocity = -self.vx / self.r * 0.5
+        else:
+            self.angular_velocity *= 0.9
+
+        if abs(self.angular_velocity) > 0.15:
+            self.angular_velocity = 0.15 if self.angular_velocity > 0 else -0.15
+
+        if abs(self.angular_velocity) < 0.01:
+            self.angular_velocity = 0
+
+        self.angle += self.angular_velocity
 
         if self.x - self.r < 0:
             self.x = self.r
@@ -215,8 +191,8 @@ class Cube:
     def draw(self):
         if self.base_image:
             rotated_image = pygame.transform.rotozoom(
-                self.base_image, 
-                math.degrees(self.angle), 
+                self.base_image,
+                math.degrees(self.angle),
                 1.0
             )
             rect = rotated_image.get_rect(center=(int(self.x), int(self.y)))
@@ -236,29 +212,24 @@ def resolve_collision(a, b):
     if a.held or b.held:
         return
 
-    # Her iki objeyi de daire gibi ele al (küpün de .r özelliği var artık)
     dx = b.x - a.x
     dy = b.y - a.y
     dist = math.hypot(dx, dy)
     min_dist = a.r + b.r
 
     if dist == 0:
-        # Aynı noktadaysalar rastgele ayır
         angle = random.random() * 2 * math.pi
         dx = math.cos(angle)
         dy = math.sin(angle)
         dist = 0.1
-    
+
     if dist >= min_dist:
         return
 
-    overlap = min_dist - dist
+    overlap = (min_dist - dist) * 0.5
     nx = dx / dist
     ny = dy / dist
 
-    # Overlap'i kademeli olarak çöz (her frame'de %50'si)
-    overlap *= 0.5
-    
     total_mass = a.mass + b.mass
     a.x -= nx * overlap * (b.mass / total_mass)
     a.y -= ny * overlap * (b.mass / total_mass)
@@ -282,8 +253,7 @@ def resolve_collision(a, b):
     a.vy -= iy / a.mass
     b.vx += ix / b.mass
     b.vy += iy / b.mass
-    
-    # Çok küçük hızları sıfırla (titreşimi önle)
+
     if abs(a.vx) < 0.01:
         a.vx = 0
     if abs(a.vy) < 0.01:
@@ -298,11 +268,9 @@ def is_screen_full():
     total_area = WIDTH * HEIGHT
     balls_area = sum(math.pi * ball.r * ball.r for ball in balls)
     if cube:
-        balls_area += math.pi * cube.r * cube.r  # Küp de daire gibi
+        balls_area += math.pi * cube.r * cube.r
     coverage = balls_area / total_area
-    
-    ball_count = len(balls) + (1 if cube else 0)
-    return coverage > COVERAGE_THRESHOLD or ball_count >= MAX_BALLS
+    return coverage > COVERAGE_THRESHOLD or len(balls) + (1 if cube else 0) >= MAX_BALLS
 
 
 def reset_game():
@@ -317,9 +285,7 @@ def reset_game():
     held_ball = None
 
 
-# ----------------- ANA DÖNGÜ -----------------
 running = True
-
 while running:
     clock.tick(60)
     screen.fill((0, 0, 0))
@@ -328,21 +294,17 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_r:
-                reset_game()
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+            reset_game()
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             mx, my = event.pos
-            
-            # Küp için daire kontrolü yap
-            if cube:
-                if (mx - cube.x) ** 2 + (my - cube.y) ** 2 <= cube.r ** 2:
-                    held_ball = cube
-                    cube.held = True
-                    cube.vx = cube.vy = 0
-                    prev_mouse_pos = (mx, my)
-            
+            if cube and (mx - cube.x) ** 2 + (my - cube.y) ** 2 <= cube.r ** 2:
+                held_ball = cube
+                cube.held = True
+                cube.vx = cube.vy = 0
+                prev_mouse_pos = (mx, my)
+
             if not held_ball:
                 for ball in reversed(balls):
                     if (mx - ball.x) ** 2 + (my - ball.y) ** 2 <= ball.r ** 2:
@@ -356,7 +318,6 @@ while running:
             mx, my = pygame.mouse.get_pos()
             dx = mx - prev_mouse_pos[0]
             dy = my - prev_mouse_pos[1]
-
             held_ball.vx = dx
             held_ball.vy = dy
             held_ball.held = False
@@ -368,22 +329,16 @@ while running:
         held_ball.y = my
         prev_mouse_pos = (mx, my)
 
-    screen_full = is_screen_full()
-
-    if not screen_full:
+    if not is_screen_full():
         now = pygame.time.get_ticks()
         if now - last_spawn >= next_spawn_delay:
             spawn_count += 1
-            
-            # Sıra geldiğinde ve henüz düşmediyse KÜP DÜŞÜR
             if spawn_count == CUBE_DROP_INDEX and not CUBE_SPAWNED:
                 size = MIN_RADIUS * 2
                 x = random.randint(size // 2, WIDTH - size // 2)
                 cube = Cube(x, -size // 2, size)
                 CUBE_SPAWNED = True
-                print(f"🟨 KÜP DÜŞTÜ! ({spawn_count}. sırada)")
             else:
-                # Normal top düşür
                 r = random.randint(MIN_RADIUS, MAX_RADIUS)
                 x = random.randint(r, WIDTH - r)
                 balls.append(Ball(x, -r, r))
@@ -396,11 +351,8 @@ while running:
     if cube:
         cube.update()
 
-    # Tüm objeleri bir listede topla (toplar + küp)
     all_objects = balls + ([cube] if cube else [])
-    
-    # Çarpışmaları birkaç kez işle - daha stabil fizik
-    for iteration in range(3):
+    for _ in range(3):
         for i in range(len(all_objects)):
             for j in range(i + 1, len(all_objects)):
                 resolve_collision(all_objects[i], all_objects[j])

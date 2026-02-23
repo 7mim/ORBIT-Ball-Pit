@@ -15,7 +15,6 @@ All objects can be grabbed and thrown using the mouse.
 - Random sizes and spawn delays  
 - Rotating sprites when images are available  
 - Mouse drag, hold, and throw interaction  
-- Press `R` to reset the simulation  
 
 ---
 

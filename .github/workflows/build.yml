@@ -25,7 +25,7 @@ jobs:
         pyinstaller --onefile --windowed --add-data "assets;assets" game.py
 
     - name: Upload Executable
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: MyGame-Windows-EXE
         path: dist/main.exe

@@ -22,7 +22,7 @@ jobs:
 
     - name: Build EXE with PyInstaller
       run: |
-        pyinstaller --onefile --icon=icon.png --windowed --add-data "assets;assets" game.py
+        pyinstaller --onefile --icon=icon.ico --windowed --add-data "assets;assets" game.py
 
     - name: Upload Executable
       uses: actions/upload-artifact@v4
